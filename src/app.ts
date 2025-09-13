@@ -3,6 +3,16 @@ enum ProjectStatus {
   Finished,
 }
 
+type Listener<T> = (items: T[]) => void;
+
+interface Validatable {
+  value: string | number;
+  required?: boolean;
+  minLength?: number;
+  maxLength?: number;
+  min?: number;
+  max?: number;
+}
 class Project {
   constructor(
     public id: string,
@@ -13,24 +23,26 @@ class Project {
   ) {}
 }
 
-type Listener = (items: Project[]) => void;
+class State<T> {
+  protected listeners: Listener<T>[] = [];
 
-class ProjectState {
-  private listeners: Listener[] = [];
+  addListener(listenerFn: Listener<T>) {
+    this.listeners.push(listenerFn);
+  }
+}
+class ProjectState extends State<Project> {
   private projects: Project[] = [];
   private static instance: ProjectState;
 
-  private constructor() {}
+  private constructor() {
+    super();
+  }
 
   static getInstance() {
     if (this.instance) return this.instance;
 
     this.instance = new ProjectState();
     return this.instance;
-  }
-
-  addListener(listenerFn: Listener) {
-    this.listeners.push(listenerFn);
   }
 
   addProject(title: string, desc: string, numOfPeople: number) {
@@ -50,14 +62,6 @@ class ProjectState {
   }
 }
 const projectState = ProjectState.getInstance();
-interface Validatable {
-  value: string | number;
-  required?: boolean;
-  minLength?: number;
-  maxLength?: number;
-  min?: number;
-  max?: number;
-}
 
 function validate(validatableInput: Validatable) {
   let isValid = true;
