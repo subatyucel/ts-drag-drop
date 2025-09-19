@@ -1,56 +1,56 @@
-namespace App {
-  type Listener<T> = (items: T[]) => void;
+import { Project, ProjectStatus } from "../models/project.js";
 
-  class State<T> {
-    protected listeners: Listener<T>[] = [];
+type Listener<T> = (items: T[]) => void;
 
-    addListener(listenerFn: Listener<T>) {
-      this.listeners.push(listenerFn);
-    }
+class State<T> {
+  protected listeners: Listener<T>[] = [];
+
+  addListener(listenerFn: Listener<T>) {
+    this.listeners.push(listenerFn);
+  }
+}
+
+export class ProjectState extends State<Project> {
+  private projects: Project[] = [];
+  private static instance: ProjectState;
+
+  private constructor() {
+    super();
   }
 
-  export class ProjectState extends State<Project> {
-    private projects: Project[] = [];
-    private static instance: ProjectState;
+  static getInstance() {
+    if (this.instance) return this.instance;
 
-    private constructor() {
-      super();
-    }
+    this.instance = new ProjectState();
+    return this.instance;
+  }
 
-    static getInstance() {
-      if (this.instance) return this.instance;
+  addProject(title: string, desc: string, numOfPeople: number) {
+    const newProject = new Project(
+      Math.random().toString(),
+      title,
+      desc,
+      numOfPeople,
+      ProjectStatus.Active
+    );
 
-      this.instance = new ProjectState();
-      return this.instance;
-    }
+    this.projects.push(newProject);
+    this.updateListener();
+  }
 
-    addProject(title: string, desc: string, numOfPeople: number) {
-      const newProject = new Project(
-        Math.random().toString(),
-        title,
-        desc,
-        numOfPeople,
-        ProjectStatus.Active
-      );
-
-      this.projects.push(newProject);
+  moveProject(prjId: string, newStatus: ProjectStatus) {
+    const project = this.projects.find((prj) => prj.id === prjId);
+    if (project && project.status !== newStatus) {
+      project.status = newStatus;
       this.updateListener();
     }
-
-    moveProject(prjId: string, newStatus: ProjectStatus) {
-      const project = this.projects.find((prj) => prj.id === prjId);
-      if (project && project.status !== newStatus) {
-        project.status = newStatus;
-        this.updateListener();
-      }
-    }
-
-    private updateListener() {
-      for (const listenerFn of this.listeners) {
-        listenerFn(this.projects.slice());
-      }
-    }
   }
 
-  export const projectState = ProjectState.getInstance();
+  private updateListener() {
+    for (const listenerFn of this.listeners) {
+      listenerFn(this.projects.slice());
+    }
+  }
 }
+
+export const projectState = ProjectState.getInstance();
